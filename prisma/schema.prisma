@@ -1,0 +1,193 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextIndex"]
+  output          = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  EDITOR
+  AUTHOR
+}
+
+enum PostStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  SPAM
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @db.VarChar(255)
+  name         String   @db.VarChar(120)
+  role         Role     @default(EDITOR)
+  avatarUrl    String?  @db.VarChar(512)
+  bio          String?  @db.Text
+  socialLinks  Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  blogs      Blog[]
+  mediaItems Media[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique @db.VarChar(100)
+  slug        String   @unique @db.VarChar(120)
+  description String?  @db.VarChar(500)
+  imageUrl    String?  @db.VarChar(512)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  blogs Blog[]
+
+  @@index([slug])
+  @@map("categories")
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique @db.VarChar(50)
+  slug      String   @unique @db.VarChar(60)
+  createdAt DateTime @default(now())
+
+  blogs BlogTag[]
+
+  @@index([slug])
+  @@map("tags")
+}
+
+model Blog {
+  id               String     @id @default(cuid())
+  title            String     @db.VarChar(255)
+  slug             String     @unique @db.VarChar(280)
+  excerpt          String     @db.VarChar(500)
+  content          String     @db.LongText
+  featuredImage    String     @db.VarChar(512)
+  featuredImageAlt String?    @db.VarChar(255)
+  readingTimeMin   Int        @default(3)
+  isFeatured       Boolean    @default(false)
+  status           PostStatus @default(DRAFT)
+  publishedAt      DateTime?
+  viewCount        Int        @default(0)
+  likeCount        Int        @default(0)
+
+  // SEO Fields
+  metaTitle       String? @db.VarChar(160)
+  metaDescription String? @db.VarChar(320)
+  canonicalUrl    String? @db.VarChar(512)
+  ogImageUrl      String? @db.VarChar(512)
+  noIndex         Boolean @default(false)
+
+  // Relationships
+  authorId   String
+  author     User      @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  categoryId String
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  tags       BlogTag[]
+  comments   Comment[]
+  likes      BlogLike[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([status, publishedAt])
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([isFeatured])
+  @@fulltext([title, excerpt, content])
+  @@map("blogs")
+}
+
+model BlogTag {
+  blogId String
+  tagId  String
+  blog   Blog   @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([blogId, tagId])
+  @@index([tagId])
+  @@map("blog_tags")
+}
+
+model Comment {
+  id            String        @id @default(cuid())
+  blogId        String
+  blog          Blog          @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  authorName    String        @db.VarChar(100)
+  authorEmail   String        @db.VarChar(255)
+  authorWebsite String?       @db.VarChar(255)
+  content       String        @db.Text
+  status        CommentStatus @default(PENDING)
+  ipHash        String        @db.VarChar(64)
+  userAgent     String?       @db.VarChar(255)
+  isFlagged     Boolean       @default(false)
+
+  // 1-Level Self-Referencing Relation for Replies
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([blogId, status])
+  @@index([parentId])
+  @@map("comments")
+}
+
+model BlogLike {
+  id             String   @id @default(cuid())
+  blogId         String
+  blog           Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  identifierHash String   @db.VarChar(64)
+  createdAt      DateTime @default(now())
+
+  @@unique([blogId, identifierHash])
+  @@index([blogId])
+  @@map("blog_likes")
+}
+
+model Media {
+  id           String   @id @default(cuid())
+  filename     String   @db.VarChar(255)
+  url          String   @db.VarChar(512)
+  mimeType     String   @db.VarChar(100)
+  sizeBytes    Int
+  width        Int?
+  height       Int?
+  altText      String?  @db.VarChar(255)
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+  createdAt    DateTime @default(now())
+
+  @@index([uploadedById])
+  @@map("media")
+}
+
+model Setting {
+  key       String   @id @db.VarChar(100)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}

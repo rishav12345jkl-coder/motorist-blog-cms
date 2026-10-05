@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-brand-black: #121316;
+  --color-brand-charcoal: #1E2024;
+  --color-brand-contrast: #2B2C2D;
+  --color-brand-taupe: #C2B7AC;
+  --color-brand-taupe-light: #E7E3DF;
+  --color-brand-slate: #323841;
+  --color-brand-amber: #E05A2B;
+  --color-brand-amber-hover: #C84B1F;
+
+  --color-bg-base: #F8F9FA;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-surface-subtle: #F1F3F5;
+
+  --color-border-subtle: rgba(43, 44, 45, 0.08);
+  --color-border-medium: rgba(43, 44, 45, 0.16);
+  --color-border-strong: rgba(43, 44, 45, 0.35);
+
+  --color-text-primary: #1E2024;
+  --color-text-secondary: #525866;
+  --color-text-muted: #868C98;
+
+  --page-width: 1200px;
+  --buttons-radius: 6px;
+  --inputs-radius: 6px;
+  --cards-radius: 8px;
+  --badges-radius: 40px;
+}
+
+body {
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-base);
+  font-family: var(--font-jost), sans-serif;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-opensans), var(--font-jost), sans-serif;
+  letter-spacing: -0.02em;
+  color: var(--color-brand-charcoal);
+  font-weight: 700;
+}
+
+/* Custom Scrollbar for modern industrial feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F3F5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C2B7AC;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #1E2024;
+}
